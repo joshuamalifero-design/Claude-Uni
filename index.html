@@ -1,373 +1,348 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sapphire — Cut to Last</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trillion — Revenue Engine Simulator</title>
+<meta name="description" content="Model your business month by month and see exactly what it would take to reach $1 trillion in monthly revenue.">
 <style>
-  :root {
-    --midnight: #0a1330;
-    --sapphire: #1e3f8f;
-    --sapphire-bright: #4a72e0;
-    --bone: #eeece3;
-    --ink: #12131a;
-    --gold: #ad8a4e;
-    --line: rgba(10, 19, 48, 0.14);
-    --surface: var(--bone);
-    --surface-alt: #ffffff;
-    --text: var(--ink);
-    --text-dim: #55575f;
-    --panel-dark: var(--midnight);
-    --panel-dark-text: var(--bone);
+:root{
+  --bg:#0b0d12; --panel:#12151d; --panel2:#171b26; --line:#242a38; --text:#e8ecf4; --muted:#8b94a8;
+  --accent:#5eead4; --accent2:#818cf8; --warn:#fbbf24; --bad:#f87171; --good:#4ade80;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#f6f7fb; --panel:#ffffff; --panel2:#f0f2f8; --line:#dde1ec; --text:#141824; --muted:#5d667a;
+    --accent:#0d9488; --accent2:#4f46e5; --warn:#b45309; --bad:#dc2626; --good:#15803d;
   }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    background: var(--surface);
-    color: var(--text);
-    font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  h1, h2, h3 { font-family: "Fraunces", Georgia, serif; text-wrap: balance; color: var(--text); }
-  a { color: inherit; }
-  .container { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
-  .mono { font-family: "IBM Plex Mono", "Courier New", monospace; }
-  .eyebrow {
-    font-family: "IBM Plex Mono", monospace;
-    text-transform: uppercase;
-    letter-spacing: 0.16em;
-    font-size: 0.72rem;
-    color: var(--gold);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 18px;
-  }
-  .eyebrow::before { content: ''; width: 22px; height: 1px; background: var(--gold); display: inline-block; }
-
-  header {
-    position: sticky; top: 0; z-index: 20;
-    background: rgba(238, 236, 227, 0.88);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid var(--line);
-  }
-  nav.container {
-    display: flex; align-items: center; justify-content: space-between;
-    height: 76px;
-  }
-  .wordmark {
-    font-family: "Fraunces", serif;
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-  }
-  .wordmark em { font-style: italic; color: var(--sapphire-bright); }
-  .navlinks { display: flex; gap: 36px; font-size: 0.92rem; }
-  .navlinks a { position: relative; padding-bottom: 4px; }
-  .navlinks a:hover { color: var(--sapphire-bright); }
-  .navlinks a:focus-visible, a:focus-visible, button:focus-visible {
-    outline: 2px solid var(--sapphire-bright); outline-offset: 3px; border-radius: 2px;
-  }
-  .navcta {
-    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em;
-    border: 1px solid var(--text); padding: 10px 20px; white-space: nowrap;
-    transition: background 0.2s, color 0.2s;
-  }
-  .navcta:hover { background: var(--text); color: var(--surface); }
-
-  .hero {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    min-height: 640px;
-    overflow: hidden;
-    background: var(--panel-dark);
-  }
-  .hero-copy {
-    color: var(--panel-dark-text);
-    display: flex; flex-direction: column; justify-content: center;
-    padding: 72px 64px 72px 32px;
-    position: relative; z-index: 2;
-  }
-  .hero .eyebrow { color: #cfd8f5; }
-  .hero .eyebrow::before { background: #cfd8f5; }
-  .hero h1 {
-    font-size: clamp(2.6rem, 4.4vw, 4.1rem);
-    font-weight: 600;
-    line-height: 1.04;
-    letter-spacing: -0.01em;
-    margin-bottom: 26px;
-  }
-  .hero h1 i { font-style: italic; color: var(--sapphire-bright); }
-  .hero p.lede {
-    max-width: 440px; color: #c6cbdd; font-size: 1.08rem; margin-bottom: 40px;
-  }
-  .hero-actions { display: flex; gap: 16px; align-items: center; }
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.07em;
-    padding: 15px 30px; border: 1px solid transparent; cursor: pointer;
-    font-family: "IBM Plex Sans", sans-serif; font-weight: 500;
-    transition: transform 0.15s ease, background 0.2s, color 0.2s, border-color 0.2s;
-  }
-  .btn:hover { transform: translateY(-1px); }
-  .btn-solid { background: var(--bone); color: var(--midnight); }
-  .btn-solid:hover { background: var(--sapphire-bright); color: #fff; }
-  .btn-line { border-color: rgba(238,236,227,0.4); color: var(--panel-dark-text); }
-  .btn-line:hover { border-color: var(--panel-dark-text); }
-
-  .hero-facet {
-    position: relative;
-    background: linear-gradient(135deg, var(--sapphire-bright) 0%, var(--sapphire) 45%, var(--midnight) 100%);
-    clip-path: polygon(18% 0, 100% 0, 100% 100%, 0% 100%);
-  }
-  .hero-facet::after {
-    content: '';
-    position: absolute; inset: 0;
-    background:
-      linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.16) 42%, transparent 54%),
-      linear-gradient(65deg, transparent 55%, rgba(255,255,255,0.08) 63%, transparent 72%);
-  }
-  .hero-tag {
-    position: absolute; right: 40px; bottom: 40px; z-index: 3;
-    font-family: "IBM Plex Mono", monospace; font-size: 0.7rem;
-    color: rgba(238,236,227,0.75); text-align: right; line-height: 1.6;
-  }
-
-  @media (max-width: 860px) {
-    .hero { grid-template-columns: 1fr; min-height: auto; }
-    .hero-facet { display: none; }
-    .hero-copy { padding: 56px 24px; }
-  }
-
-  section { padding: 108px 0; }
-  .section-head { max-width: 620px; margin-bottom: 56px; }
-  .section-head h2 { font-size: clamp(1.9rem, 3vw, 2.5rem); font-weight: 600; }
-
-  .collections { background: var(--surface); }
-  .col-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
-  .piece { background: var(--surface-alt); border: 1px solid var(--line); display: flex; flex-direction: column; }
-  .piece:nth-child(2) { transform: translateY(28px); }
-  .piece-swatch { aspect-ratio: 4/5; position: relative; overflow: hidden; }
-  .piece-swatch::after {
-    content: '';
-    position: absolute; inset: 0;
-    background: linear-gradient(140deg, transparent 40%, rgba(255,255,255,0.14) 50%, transparent 60%);
-  }
-  .swatch-1 { background: linear-gradient(160deg, #23407f, #0a1330); }
-  .swatch-2 { background: linear-gradient(160deg, #4a72e0, #1e3f8f); }
-  .swatch-3 { background: linear-gradient(160deg, #12131a, #23407f); }
-  .piece-info { padding: 22px 24px 26px; }
-  .piece-info .code {
-    font-family: "IBM Plex Mono", monospace; font-size: 0.68rem;
-    color: var(--gold); letter-spacing: 0.06em; margin-bottom: 8px; display: block;
-  }
-  .piece-info h3 { font-size: 1.3rem; font-weight: 600; margin-bottom: 6px; }
-  .piece-info .spec { color: var(--text-dim); font-size: 0.86rem; margin-bottom: 14px; }
-  .piece-info .price { font-family: "IBM Plex Mono", monospace; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
-
-  @media (max-width: 860px) {
-    .col-grid { grid-template-columns: 1fr; }
-    .piece:nth-child(2) { transform: none; }
-  }
-
-  .about { background: var(--panel-dark); color: var(--panel-dark-text); }
-  .about-grid { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 72px; align-items: start; }
-  .about .eyebrow { color: #cfd8f5; }
-  .about .eyebrow::before { background: #cfd8f5; }
-  .about h2 { color: var(--panel-dark-text); font-size: clamp(1.9rem, 3vw, 2.5rem); margin-bottom: 22px; }
-  .about-copy p { color: #c6cbdd; font-size: 1.02rem; max-width: 58ch; line-height: 1.7; }
-  .care-card { border: 1px solid rgba(238,236,227,0.22); padding: 30px 28px; font-family: "IBM Plex Mono", monospace; }
-  .care-card .care-title {
-    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em;
-    color: var(--gold); margin-bottom: 22px;
-  }
-  .care-row {
-    display: flex; justify-content: space-between; gap: 20px;
-    padding: 13px 0; border-top: 1px solid rgba(238,236,227,0.14);
-    font-size: 0.85rem;
-  }
-  .care-row:first-of-type { border-top: none; }
-  .care-row span:first-child { color: #a8adc4; }
-  .care-row span:last-child { color: var(--panel-dark-text); text-align: right; }
-
-  .lookbook { background: var(--surface); }
-  .look-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
-  .look { aspect-ratio: 3/4; position: relative; overflow: hidden; display: flex; align-items: flex-end; padding: 16px; }
-  .look::after { content:''; position:absolute; inset:0; background: linear-gradient(0deg, rgba(10,19,48,0.55), transparent 55%); }
-  .look span {
-    position: relative; z-index: 1; font-family: "IBM Plex Mono", monospace;
-    font-size: 0.68rem; color: #eeece3; letter-spacing: 0.06em;
-  }
-  .look--1 { background: linear-gradient(165deg, #0a1330, #4a72e0); }
-  .look--2 { background: linear-gradient(165deg, #1e3f8f, #eeece3); }
-  .look--3 { background: linear-gradient(165deg, #12131a, #1e3f8f); }
-  .look--4 { background: linear-gradient(165deg, #4a72e0, #0a1330); }
-
-  @media (max-width: 860px) {
-    .about-grid { grid-template-columns: 1fr; }
-    .look-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-
-  .contact { background: var(--surface); border-top: 1px solid var(--line); }
-  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
-  .contact h2 { font-size: clamp(1.9rem, 3vw, 2.4rem); margin-bottom: 14px; }
-  .contact p.sub { color: var(--text-dim); max-width: 42ch; }
-  .contact-form { display: flex; gap: 12px; }
-  .contact-form input {
-    flex: 1; padding: 15px 18px; border: 1px solid var(--line);
-    background: var(--surface-alt); color: var(--text); font-family: inherit; font-size: 0.95rem;
-  }
-  .contact-form input::placeholder { color: var(--text-dim); }
-  .contact-form input:focus-visible { outline: 2px solid var(--sapphire-bright); outline-offset: 2px; }
-
-  footer {
-    background: var(--panel-dark); color: var(--panel-dark-text);
-    padding: 40px 0; border-top: 1px solid rgba(238,236,227,0.12);
-  }
-  .foot-grid { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-  .foot-grid .wordmark { color: var(--panel-dark-text); font-size: 1.2rem; }
-  .foot-grid .wordmark em { color: var(--sapphire-bright); }
-  footer p { font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; color: #8f93a8; }
-
-  @media (max-width: 700px) {
-    .navlinks { display: none; }
-    .contact-grid { grid-template-columns: 1fr; }
-    .contact-form { flex-direction: column; }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; }
-  }
+}
+:root[data-theme="light"]{
+  --bg:#f6f7fb; --panel:#ffffff; --panel2:#f0f2f8; --line:#dde1ec; --text:#141824; --muted:#5d667a;
+  --accent:#0d9488; --accent2:#4f46e5; --warn:#b45309; --bad:#dc2626; --good:#15803d;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+header.nav{display:flex;align-items:center;justify-content:space-between;padding:18px 0}
+.logo{font-weight:800;letter-spacing:-.02em;font-size:20px;display:flex;align-items:center;gap:10px}
+.logo i{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:inline-block}
+.btn{appearance:none;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:9px 14px;border-radius:10px;font:inherit;font-size:14px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));border:0;color:#04121a;font-weight:700}
+.hero{padding:56px 0 34px;text-align:center}
+.eyebrow{display:inline-block;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);border:1px solid var(--line);padding:6px 12px;border-radius:99px;background:var(--panel)}
+h1{font-size:clamp(34px,6vw,64px);line-height:1.05;letter-spacing:-.035em;margin:20px auto 16px;max-width:900px}
+h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:var(--muted);max-width:660px;margin:0 auto 26px;font-size:18px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:34px 0 10px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:left}
+.stat b{display:block;font-size:26px;letter-spacing:-.02em}
+.stat small{color:var(--muted)}
+section{padding:28px 0}
+h2{font-size:26px;letter-spacing:-.02em;margin:0 0 6px}
+.sub{color:var(--muted);margin:0 0 20px}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.presets .btn{font-size:13px;padding:7px 11px}
+.presets .btn[aria-pressed="true"]{border-color:var(--accent);color:var(--accent)}
+.ctl{margin:0 0 14px}
+.ctl label{display:flex;justify-content:space-between;font-size:13.5px;color:var(--muted);margin-bottom:4px}
+.ctl label output{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.verdict{border-radius:14px;padding:16px 18px;margin-bottom:14px;border:1px solid var(--line);background:var(--panel2)}
+.verdict h3{margin:0 0 4px;font-size:20px;letter-spacing:-.01em}
+.verdict p{margin:0;color:var(--muted);font-size:14.5px}
+.verdict.hit{border-color:var(--good)} .verdict.miss{border-color:var(--warn)}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.kpi small{color:var(--muted);display:block;font-size:12px}
+.kpi b{font-size:19px;font-variant-numeric:tabular-nums}
+.chartbox{position:relative;height:340px}
+canvas{width:100%;height:100%;display:block}
+.tip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12.5px;box-shadow:0 8px 30px rgba(0,0,0,.35);display:none;white-space:nowrap}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-top:8px;flex-wrap:wrap}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.reality{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.reality .card h3{margin:0 0 6px;font-size:16px}
+.reality .card p{margin:0;color:var(--muted);font-size:14.5px}
+.reality .big{display:block;font-size:28px;font-weight:800;letter-spacing:-.02em;color:var(--accent);margin-bottom:4px}
+.playbook{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;counter-reset:s}
+.playbook .card{counter-increment:s}
+.playbook .card:before{content:counter(s);display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);font-weight:700;margin-bottom:10px;color:var(--accent)}
+.playbook h3{margin:0 0 6px;font-size:16px}.playbook p{margin:0;color:var(--muted);font-size:14.5px}
+footer{padding:34px 0 50px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:30px}
+.sr{position:absolute;left:-9999px}
+@media (max-width:960px){
+  .grid{grid-template-columns:1fr}
+  .stats,.kpis,.playbook{grid-template-columns:repeat(2,1fr)}
+  .reality{grid-template-columns:1fr}
+}
+@media (max-width:480px){ .kpis,.stats,.playbook{grid-template-columns:1fr 1fr} .chartbox{height:280px} }
 </style>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
+<div class="wrap">
+  <header class="nav">
+    <div class="logo"><i></i>Trillion</div>
+    <button class="btn" id="theme" aria-label="Toggle light and dark theme">Theme</button>
+  </header>
 
-<header>
-  <nav class="container">
-    <a href="#" class="wordmark">SAPPHIRE<em>.</em></a>
-    <div class="navlinks">
-      <a href="#collections">Collection</a>
-      <a href="#about">Craft</a>
-      <a href="#lookbook">Lookbook</a>
-      <a href="#contact">Contact</a>
-    </div>
-    <a href="#contact" class="navcta">Join the list</a>
-  </nav>
-</header>
-
-<section class="hero">
-  <div class="hero-copy">
-    <p class="eyebrow">Cut 04 — Autumn/Winter 2026</p>
-    <h1>Cut like a stone,<br>worn like a <i>habit.</i></h1>
-    <p class="lede">Sapphire builds a small, deliberate wardrobe around eleven fabrics and one standard: does it still look right in five years. No seasons to chase — just a collection that gets better with wear.</p>
-    <div class="hero-actions">
-      <a href="#collections" class="btn btn-solid">View the collection</a>
-      <a href="#about" class="btn btn-line">Read our approach</a>
+  <div class="hero">
+    <span class="eyebrow">Revenue Engine Simulator</span>
+    <h1>What would it actually take to make <span>$1 trillion a month?</span></h1>
+    <p>Model customers, pricing, churn and growth over 10 years. See exactly where your business lands, and what the number demands of the real world.</p>
+    <a class="btn primary" href="#sim">Open the simulator</a>
+    <div class="stats">
+      <div class="stat"><b>$12T</b><small>per year at $1T/month</small></div>
+      <div class="stat"><b>~11%</b><small>of world GDP (≈$110T)</small></div>
+      <div class="stat"><b>~30×</b><small>Apple's annual revenue</small></div>
+      <div class="stat"><b>$380k</b><small>earned every second</small></div>
     </div>
   </div>
-  <div class="hero-facet">
-    <p class="hero-tag">42.1 CT EQUIV.<br>REF. SPH-2026-04</p>
-  </div>
-</section>
 
-<section id="collections" class="collections">
-  <div class="container">
-    <div class="section-head">
-      <p class="eyebrow">The Standing Collection</p>
-      <h2>Three pieces, built to be reordered for a decade</h2>
-    </div>
-    <div class="col-grid">
-      <article class="piece">
-        <div class="piece-swatch swatch-1"></div>
-        <div class="piece-info">
-          <span class="code">SPH-OX-014</span>
-          <h3>The Oxford Shirt</h3>
-          <p class="spec">120s cotton poplin, mother-of-pearl buttons</p>
-          <p class="price">$148</p>
+  <section id="sim">
+    <h2>The simulator</h2>
+    <p class="sub">Move the sliders. Everything recalculates instantly, in your browser. Nothing is sent anywhere.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="presets" role="group" aria-label="Presets">
+          <button class="btn" data-p="saas" aria-pressed="false">Bootstrapped SaaS</button>
+          <button class="btn" data-p="viral" aria-pressed="false">Viral app</button>
+          <button class="btn" data-p="enterprise" aria-pressed="false">Enterprise platform</button>
+          <button class="btn" data-p="dream" aria-pressed="false">The $1T attempt</button>
         </div>
-      </article>
-      <article class="piece">
-        <div class="piece-swatch swatch-2"></div>
-        <div class="piece-info">
-          <span class="code">SPH-KN-027</span>
-          <h3>Merino Crewneck</h3>
-          <p class="spec">100% Australian merino, 14-gauge knit</p>
-          <p class="price">$168</p>
+        <div id="controls"></div>
+      </div>
+      <div>
+        <div class="verdict" id="verdict" aria-live="polite"></div>
+        <div class="kpis" id="kpis"></div>
+        <div class="card">
+          <div class="chartbox">
+            <canvas id="chart" role="img" aria-label="Monthly revenue over 120 months on a logarithmic scale, with a line marking one trillion dollars"></canvas>
+            <div class="tip" id="tip"></div>
+          </div>
+          <div class="legend">
+            <span><i style="background:var(--accent)"></i>Monthly revenue (log scale)</span>
+            <span><i style="background:var(--accent2)"></i>Monthly profit after CAC</span>
+            <span><i style="background:var(--warn)"></i>$1T / month target</span>
+          </div>
         </div>
-      </article>
-      <article class="piece">
-        <div class="piece-swatch swatch-3"></div>
-        <div class="piece-info">
-          <span class="code">SPH-CT-002</span>
-          <h3>Wool Overcoat No. 2</h3>
-          <p class="spec">Melton wool, horn buttons, half-lined</p>
-          <p class="price">$420</p>
-        </div>
-      </article>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section id="about" class="about">
-  <div class="container about-grid">
-    <div class="care-card">
-      <p class="care-title">Care Label — Read Before Everything</p>
-      <div class="care-row"><span>Founded</span><span>2019, Lisbon workshop</span></div>
-      <div class="care-row"><span>Runs</span><span>Batches of 200–400 units</span></div>
-      <div class="care-row"><span>Fabric sourcing</span><span>Portugal, Japan, New Zealand</span></div>
-      <div class="care-row"><span>Dye process</span><span>Low-water, GOTS certified</span></div>
-      <div class="care-row"><span>Repair policy</span><span>Free mending, life of garment</span></div>
-    </div>
-    <div class="about-copy">
-      <p class="eyebrow">Why We Make It This Way</p>
-      <h2>We'd rather sell you one coat than four jackets</h2>
-      <p>Sapphire started as a rejection of the six-week drop cycle. We hold a standing collection instead of seasons — the same eleven fabrics, refined a little each year, cut in a workshop outside Lisbon that we've worked with since day one.</p>
-      <p style="margin-top:18px;">Every garment carries a code instead of a name. Ask us for SPH-CT-002 in five years and we'll still know exactly what thread it's cut from.</p>
-    </div>
-  </div>
-</section>
+  <section>
+    <h2>Reality check</h2>
+    <p class="sub">Numbers for your current scenario.</p>
+    <div class="reality" id="reality"></div>
+  </section>
 
-<section id="lookbook" class="lookbook">
-  <div class="container">
-    <div class="section-head">
-      <p class="eyebrow">Field Notes</p>
-      <h2>Worn in Lisbon, October</h2>
+  <section>
+    <h2>The honest playbook</h2>
+    <p class="sub">Four levers decide every revenue curve. Large outcomes come from compounding all four.</p>
+    <div class="playbook">
+      <div class="card"><h3>Acquire cheaply</h3><p>Growth in new customers is the steepest lever. Keep CAC well below lifetime value (LTV/CAC above 3).</p></div>
+      <div class="card"><h3>Keep them</h3><p>Churn quietly caps your ceiling. At 5% monthly churn, steady state is just 20× your monthly new customers.</p></div>
+      <div class="card"><h3>Expand revenue</h3><p>Raising revenue per customer over time compounds without needing a single extra user.</p></div>
+      <div class="card"><h3>Grow the market</h3><p>Every model has a ceiling set by addressable market. Past it, only new products or new markets move the line.</p></div>
     </div>
-    <div class="look-grid">
-      <div class="look look--1"><span>01 / OVERCOAT NO.2</span></div>
-      <div class="look look--2"><span>02 / OXFORD, RAW HEM</span></div>
-      <div class="look look--3"><span>03 / MERINO LAYER</span></div>
-      <div class="look look--4"><span>04 / STUDIO, ALFAMA</span></div>
-    </div>
-  </div>
-</section>
+  </section>
 
-<section id="contact" class="contact">
-  <div class="container contact-grid">
-    <div>
-      <p class="eyebrow">Restock Notice</p>
-      <h2>Get word before a run sells out</h2>
-      <p class="sub">We restock in batches of a few hundred. The list hears first — usually a week before anyone else.</p>
-    </div>
-    <form class="contact-form" onsubmit="return false;">
-      <label for="email" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Email address</label>
-      <input id="email" type="email" placeholder="you@email.com" required>
-      <button type="submit" class="btn btn-solid" style="background:var(--sapphire-bright);color:#fff;">Notify me</button>
-    </form>
-  </div>
-</section>
+  <footer>
+    Educational simulator. Outputs are projections from the inputs you choose, not forecasts, financial advice, or promises of revenue. Reference figures (world GDP, Apple revenue) are rounded approximations.
+  </footer>
+</div>
 
-<footer>
-  <div class="container foot-grid">
-    <a href="#" class="wordmark">SAPPHIRE<em>.</em></a>
-    <p>© 2026 SAPPHIRE WORKSHOP — LISBON / MADE-TO-LAST</p>
-  </div>
-</footer>
+<script>
+(function(){
+"use strict";
+var H = 120, TARGET = 1e12, WORLD = 8.1e9;
 
+var CFG = [
+  {k:"start",  label:"Starting customers",           min:1,   max:1e6,  log:true, fmt:"num"},
+  {k:"newm",   label:"New customers in month 1",     min:1,   max:1e7,  log:true, fmt:"num"},
+  {k:"g",      label:"Monthly growth of new signups",min:0,   max:60,   step:.5,    fmt:"pct"},
+  {k:"arpu",   label:"Revenue per customer / month", min:1,   max:10000,log:true, fmt:"usd"},
+  {k:"ag",     label:"Monthly price/expansion growth",min:0,  max:10,   step:.1,    fmt:"pct"},
+  {k:"churn",  label:"Monthly churn",                min:0.1, max:30,   step:.1,    fmt:"pct"},
+  {k:"cac",    label:"Cost to acquire a customer",   min:0.5, max:10000,log:true, fmt:"usd"},
+  {k:"margin", label:"Gross margin",                 min:5,   max:100,  step:1,     fmt:"pct"},
+  {k:"market", label:"Addressable market (customers)",min:1e3,max:WORLD,log:true, fmt:"num"}
+];
+var PRESETS = {
+  saas:       {start:100,   newm:50,    g:8,  arpu:49,   ag:.5, churn:3,  cac:300,  margin:80, market:5e6},
+  viral:      {start:1000,  newm:5000,  g:25, arpu:5,    ag:.5, churn:8,  cac:2,    margin:70, market:5e8},
+  enterprise: {start:5,     newm:3,     g:6,  arpu:8000, ag:1,  churn:1,  cac:9000, margin:75, market:4e5},
+  dream:      {start:1e6,   newm:1e6,   g:30, arpu:500,  ag:3,  churn:1,  cac:50,   margin:80, market:WORLD}
+};
+var state = Object.assign({}, PRESETS.saas);
+
+var nf = new Intl.NumberFormat("en-US",{notation:"compact",maximumFractionDigits:2});
+function fnum(n){ return isFinite(n) ? nf.format(n) : "∞"; }
+function fusd(n){
+  var a=Math.abs(n), s=n<0?"-":"";
+  if(a>=1e15) return s+"$"+nf.format(a/1e15)+"Q";
+  return s+"$"+nf.format(a);
+}
+function fmt(c,v){
+  if(c.fmt==="pct") return (Math.round(v*10)/10)+"%";
+  if(c.fmt==="usd") return v<10 ? "$"+v.toFixed(2) : fusd(Math.round(v));
+  return fnum(Math.round(v));
+}
+function toPos(c,v){ return c.log ? 1000*Math.log(v/c.min)/Math.log(c.max/c.min) : 1000*(v-c.min)/(c.max-c.min); }
+function fromPos(c,p){
+  var v = c.log ? c.min*Math.pow(c.max/c.min,p/1000) : c.min+(c.max-c.min)*p/1000;
+  if(c.log){ v = v>=100 ? Math.round(v) : Math.round(v*100)/100; }
+  return Math.min(c.max,Math.max(c.min,v));
+}
+
+/* ---- model ---- */
+function sim(p){
+  var churn=p.churn/100, g=p.g/100, ag=p.ag/100, m=p.margin/100;
+  var cust=[p.start], rev=[p.start*p.arpu], profit=[p.start*p.arpu*m], hit=-1, cum=profit[0];
+  var c=p.start, peak=c;
+  for(var t=1;t<=H;t++){
+    var room=Math.max(0,p.market-c*(1-churn));
+    var add=Math.min(p.newm*Math.pow(1+g,t-1),room);
+    c=c*(1-churn)+add; if(c>peak)peak=c;
+    var arpu=p.arpu*Math.pow(1+ag,t);
+    var r=c*arpu;
+    var pr=r*m-add*p.cac;
+    cust.push(c); rev.push(r); profit.push(pr); cum+=pr;
+    if(hit<0 && r>=TARGET) hit=t;
+  }
+  return {cust:cust,rev:rev,profit:profit,hit:hit,cum:cum,peak:peak,
+          ltvcac:(p.arpu*m/Math.max(churn,1e-4))/p.cac};
+}
+
+/* ---- controls ---- */
+var ctlBox=document.getElementById("controls"), inputs={}, outs={};
+CFG.forEach(function(c){
+  var d=document.createElement("div"); d.className="ctl";
+  var id="c_"+c.k;
+  d.innerHTML='<label for="'+id+'"><span>'+c.label+'</span><output id="o_'+c.k+'"></output></label>'+
+    '<input type="range" id="'+id+'" min="0" max="1000" step="1">';
+  ctlBox.appendChild(d);
+  inputs[c.k]=d.querySelector("input"); outs[c.k]=d.querySelector("output");
+  inputs[c.k].addEventListener("input",function(){
+    state[c.k]=fromPos(c,+this.value); markPreset(null); update(false);
+  });
+});
+function syncControls(){
+  CFG.forEach(function(c){
+    inputs[c.k].value=Math.round(toPos(c,state[c.k]));
+    outs[c.k].textContent=fmt(c,state[c.k]);
+  });
+}
+function markPreset(name){
+  document.querySelectorAll(".presets .btn").forEach(function(b){
+    b.setAttribute("aria-pressed", b.dataset.p===name ? "true":"false");
+  });
+}
+document.querySelectorAll(".presets .btn").forEach(function(b){
+  b.addEventListener("click",function(){
+    state=Object.assign({},PRESETS[b.dataset.p]); markPreset(b.dataset.p); update(true);
+  });
+});
+
+/* ---- render ---- */
+var result=null;
+function years(m){ return (m/12).toFixed(1)+" years"; }
+function update(sync){
+  if(sync) syncControls(); else CFG.forEach(function(c){outs[c.k].textContent=fmt(c,state[c.k]);});
+  result=sim(state);
+  var r=result, v=document.getElementById("verdict");
+  var finalRev=r.rev[H];
+  if(r.hit>0){
+    var frac=r.peak/WORLD*100;
+    v.className="verdict hit";
+    v.innerHTML="<h3>$1T/month reached in month "+r.hit+" ("+years(r.hit)+")</h3><p>This needs about "+fnum(r.cust[r.hit])+" paying customers ("+(r.cust[r.hit]/WORLD*100).toFixed(1)+"% of everyone alive). Mathematically possible, but the inputs assume you out-grow every company in history.</p>";
+  } else {
+    var need=TARGET/(state.arpu*Math.pow(1+state.ag/100,H));
+    v.className="verdict miss";
+    v.innerHTML="<h3>Not reached in 10 years. Month 120 lands at "+fusd(finalRev)+"/mo</h3><p>That is "+(finalRev/TARGET*100<0.01?"<0.01":(finalRev/TARGET*100).toFixed(2))+"% of the target. At your month-120 price you would need "+fnum(need)+" customers"+(need>WORLD?", more than the "+fnum(WORLD)+" people on Earth":"")+".</p>";
+  }
+  var k=document.getElementById("kpis");
+  function kp(a,b){return '<div class="kpi"><small>'+a+'</small><b>'+b+'</b></div>';}
+  k.innerHTML=kp("Revenue, month 12",fusd(r.rev[12]))+kp("Revenue, month 60",fusd(r.rev[60]))+
+    kp("Customers, month 120",fnum(r.cust[H]))+kp("LTV / CAC",(r.ltvcac>999?"999+":r.ltvcac.toFixed(1))+"×");
+  var annual=finalRev*12;
+  document.getElementById("reality").innerHTML=
+    '<div class="card"><span class="big">'+fusd(annual)+'</span><h3>Annualised at month 120</h3><p>World GDP is roughly $110T a year. Your scenario equals '+(annual/110e12*100).toFixed(annual/110e12<0.001?4:2)+'% of it.</p></div>'+
+    '<div class="card"><span class="big">'+fusd(r.cum)+'</span><h3>Cumulative profit, 10 years</h3><p>Gross profit minus the spend to acquire every customer. '+(r.cum<0?"Negative means this model burns more than it earns.":"Positive means growth pays for itself.")+'</p></div>'+
+    '<div class="card"><span class="big">'+(r.peak/state.market*100).toFixed(1)+'%</span><h3>Market captured at peak</h3><p>Share of your '+fnum(state.market)+'-customer addressable market. Near 100% means the ceiling, not execution, is your limit.</p></div>';
+  draw();
+}
+
+/* ---- chart ---- */
+var cv=document.getElementById("chart"), ctx=cv.getContext("2d"), tip=document.getElementById("tip"), geo=null, hoverT=-1;
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+function draw(){
+  if(!result) return;
+  var dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight;
+  if(!w||!h) return;
+  cv.width=w*dpr; cv.height=h*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,w,h);
+  var L=54,R=14,T=12,B=28, pw=w-L-R, ph=h-T-B;
+  var rev=result.rev, prof=result.profit;
+  var pos=rev.filter(function(x){return x>0;});
+  var lo=Math.pow(10,Math.floor(Math.log10(Math.max(1,Math.min.apply(null,pos))))),
+      hi=Math.pow(10,Math.ceil(Math.log10(Math.max(TARGET*1.5,Math.max.apply(null,rev)))));
+  if(hi/lo<1e3) lo=hi/1e3;
+  var llo=Math.log10(lo), lhi=Math.log10(hi);
+  function X(t){return L+pw*t/H;}
+  function Y(v){var l=Math.log10(Math.max(v,lo)); return T+ph*(1-(l-llo)/(lhi-llo));}
+  geo={X:X,L:L,R:R,pw:pw,w:w,h:h,T:T,ph:ph};
+  var line=css("--line"), muted=css("--muted");
+  ctx.font="11px system-ui,sans-serif"; ctx.textBaseline="middle";
+  for(var e=Math.ceil(llo);e<=lhi;e+=Math.max(1,Math.round((lhi-llo)/8))){
+    var y=Y(Math.pow(10,e)); ctx.strokeStyle=line; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(L,y); ctx.lineTo(w-R,y); ctx.stroke();
+    ctx.fillStyle=muted; ctx.textAlign="right"; ctx.fillText(fusd(Math.pow(10,e)),L-8,y);
+  }
+  ctx.textAlign="center"; ctx.textBaseline="top";
+  for(var t=0;t<=H;t+=24){ ctx.fillStyle=muted; ctx.fillText(t===0?"Now":(t/12)+"y",X(t),h-B+8); }
+  // target
+  ctx.setLineDash([6,5]); ctx.strokeStyle=css("--warn"); ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(L,Y(TARGET)); ctx.lineTo(w-R,Y(TARGET)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle=css("--warn"); ctx.textAlign="left"; ctx.textBaseline="bottom"; ctx.fillText("$1T / month",L+6,Y(TARGET)-4);
+  function plot(arr,color,wd){
+    ctx.strokeStyle=color; ctx.lineWidth=wd; ctx.lineJoin="round"; ctx.beginPath(); var started=false;
+    for(var t=0;t<=H;t++){ if(arr[t]<=lo && arr===prof) {started=false;continue;}
+      var x=X(t), y=Y(arr[t]); if(!started){ctx.moveTo(x,y);started=true;} else ctx.lineTo(x,y); }
+    ctx.stroke();
+  }
+  plot(prof,css("--accent2"),2); plot(rev,css("--accent"),2.6);
+  if(result.hit>0){ ctx.fillStyle=css("--good"); ctx.beginPath(); ctx.arc(X(result.hit),Y(TARGET),5,0,7); ctx.fill(); }
+  if(hoverT>=0){
+    var hx=X(hoverT); ctx.strokeStyle=muted; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(hx,T); ctx.lineTo(hx,T+ph); ctx.stroke();
+    ctx.fillStyle=css("--accent"); ctx.beginPath(); ctx.arc(hx,Y(rev[hoverT]),4,0,7); ctx.fill();
+  }
+}
+cv.addEventListener("mousemove",function(ev){
+  if(!geo||!result) return;
+  var b=cv.getBoundingClientRect(), x=ev.clientX-b.left;
+  var t=Math.round((x-geo.L)/geo.pw*H); t=Math.max(0,Math.min(H,t)); hoverT=t;
+  var p=result; tip.style.display="block";
+  tip.innerHTML="<b>Month "+t+"</b><br>Revenue "+fusd(p.rev[t])+"<br>Profit "+fusd(p.profit[t])+"<br>Customers "+fnum(p.cust[t]);
+  var tx=geo.X(t)+12; if(tx+160>geo.w) tx=geo.X(t)-170; tip.style.left=tx+"px"; tip.style.top="16px";
+  draw();
+});
+cv.addEventListener("mouseleave",function(){hoverT=-1;tip.style.display="none";draw();});
+window.addEventListener("resize",draw);
+
+/* ---- theme ---- */
+var themeBtn=document.getElementById("theme");
+themeBtn.addEventListener("click",function(){
+  var r=document.documentElement, cur=r.getAttribute("data-theme");
+  var dark = cur ? cur==="dark" : !window.matchMedia("(prefers-color-scheme: light)").matches;
+  r.setAttribute("data-theme", dark?"light":"dark"); draw();
+});
+
+markPreset("saas"); update(true);
+})();
+</script>
 </body>
 </html>
